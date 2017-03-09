@@ -5,38 +5,38 @@ require 'cuba'
 require 'cuba/safe'
 
 require 'active_record'
-require 'activerecord-jdbc-adapter'
+require 'activerecord-sqlserver-adapter'
 
 require_relative './parser'
 require_relative './interpreter'
-
-require 'sqljdbc4.jar'
 
 ActiveRecord::Base.establish_connection(
 # SQL Lite:
 #  adapter: "sqlite3",
 #  database: File.join(File.dirname(__FILE__), '..', 'db', 'medals.db')
 
-  driver: 'com.microsoft.sqlserver.jdbc.SQLServerDriver',
-  adapter: "jdbc",
+  adapter: "sqlserver",
   host: "thegamma-sql-data.database.windows.net",
   username: "<secret>",
   password: "<secret>"
-  url: 'jdbc:sqlserver://thegamma-sql-data.database.windows.net:1433;databaseName=thegamma-sql-data',
+  database: "thegamma-sql-data",
+  encoding: "utf8",
+  azure: true
 )
 
 TYPE_MAP = {
-  'integer' => 'number',
-  'string' => 'string',
-  'text' => 'string',
-  '' => 'string'  # 'c.type.to_s' returns empty string for VARCHAR(100) and for GUIDs... 
+  :integer => 'number',
+  :string => 'string',
+  :text => 'string',
+  :"" => 'string',  # 'c.type.to_s' returns empty string for VARCHAR(100) and for GUIDs...
+  :varchar => 'string'
 }
 
 PREVIEW_SIZE = 10
 
 def table_metadata(table_name)
   ActiveRecord::Base.connection.columns(table_name).reduce({}) { |h, c|
-    t = TYPE_MAP[c.type.to_s]
+    t = TYPE_MAP[c.type.to_sym]
     unless t.nil?
       h[c.name] = t
     end
